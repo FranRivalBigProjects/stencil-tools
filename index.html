@@ -1,160 +1,852 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Stencil Tools – Web Components, Compiler & Performance Optimization</title>
-
-<meta name="description" content="Advanced Stencil tools to analyze build processes, optimize bundles, debug lifecycle events, and improve performance in web components.">
-
-<meta name="keywords" content="stencil compiler analyzer, stencil build optimizer tool, stencil bundle analyzer, stencil lifecycle debugger, stencil web components performance tool">
-
 <meta name="google-site-verification" content="PkLa_ViOo6FAHpvh8SacceMb95o9tePRdrqLNBz9X1M" />
+<meta name="robots" content="index, follow">
+
+<title>Stencil Compiler – How It Works, Configuration &amp; Web Components Guide</title>
+
+<meta name="description" content="Complete Stencil compiler reference. How the Stencil compiler transforms TypeScript decorators into Web Components, compiler configuration, output targets (lazy, dist, custom-elements), and build optimization. Developer tools included.">
+
+<meta name="keywords" content="stencil compiler, stenciljs compiler, stencil web components compiler, stencil build process, stencil output targets, stencil typescript compiler, stencil lazy loading, stencil config, stencil compiler options, stencil decorators">
+
+<link rel="canonical" href="https://franrivalbigprojects.github.io/stencil-tools/">
+
+<meta property="og:title" content="Stencil Compiler – Web Components Compiler Guide and Reference">
+<meta property="og:description" content="How the Stencil compiler works, output targets, compiler configuration, and decorators. Complete developer reference.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
+:root {
+  --bg: #050510;
+  --surface: #08091a;
+  --surface2: #0d0e22;
+  --border: #12142e;
+  --border2: #181a3c;
+  --stencil: #7c3aed;
+  --stencil-dim: rgba(124,58,237,0.12);
+  --stencil-dim2: rgba(124,58,237,0.05);
+  --cyan: #06b6d4;
+  --cyan-dim: rgba(6,182,212,0.1);
+  --cyan-dim2: rgba(6,182,212,0.05);
+  --green: #22c55e;
+  --green-dim: rgba(34,197,94,0.1);
+  --green-dim2: rgba(34,197,94,0.05);
+  --orange: #f97316;
+  --orange-dim: rgba(249,115,22,0.08);
+  --yellow: #fbbf24;
+  --yellow-dim: rgba(251,191,36,0.08);
+  --text: #c0c8e0;
+  --text-muted: #3a4070;
+  --text-dim: #101830;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Inter', sans-serif;
+  --r: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-    font-family: Arial, sans-serif;
-    background: #020617;
-    color: #e5e7eb;
-    margin: 0;
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 0;
 }
 
 header {
-    background: linear-gradient(90deg, #7c3aed, #06b6d4);
-    padding: 30px;
-    text-align: center;
+  border-bottom: 1px solid var(--border2);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(5,5,16,0.97);
+  backdrop-filter: blur(12px);
+}
+
+.header-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-pill {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--stencil);
+  background: var(--stencil-dim2);
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 3px;
+  padding: 3px 9px;
+}
+
+.logo-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.logo-text strong { color: var(--stencil); font-weight: 500; }
+
+.wrapper {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* HERO */
+.hero {
+  padding: 50px 0 38px;
+  border-bottom: 1px solid var(--border2);
+  margin-bottom: 32px;
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stencil);
+  margin-bottom: 14px;
+  opacity: 0.8;
 }
 
 h1 {
-    margin: 0;
-    font-size: 2.5rem;
+  font-size: clamp(22px, 3.4vw, 32px);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+  letter-spacing: -0.022em;
+  line-height: 1.15;
 }
 
-.container {
-    max-width: 1100px;
-    margin: auto;
-    padding: 20px;
+h1 em { font-style: normal; color: var(--stencil); }
+
+.hero-sub {
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 600px;
+  line-height: 1.75;
+  margin-bottom: 22px;
 }
 
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+.hero-sub strong { color: var(--text); }
+
+.stat-row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.stat-chip {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.card {
-    background: #0f172a;
-    padding: 20px;
-    border-radius: 14px;
-    border: 1px solid #1e293b;
-    transition: 0.3s;
+.sc-val {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--stencil);
+  line-height: 1;
 }
 
-.card:hover {
-    transform: translateY(-6px);
-    border-color: #7c3aed;
+.sc-lbl {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-a {
-    text-decoration: none;
-    color: #22c55e;
-    font-weight: bold;
-    display: inline-block;
-    margin-top: 10px;
+/* SECTION */
+.sec-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
-a:hover {
-    color: #4ade80;
+.sec-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--stencil);
+  white-space: nowrap;
+  opacity: 0.7;
 }
 
-footer {
-    text-align: center;
-    padding: 20px;
-    border-top: 1px solid #1e293b;
-    margin-top: 40px;
-    font-size: 0.9rem;
+.sec-rule { flex: 1; height: 1px; background: var(--border2); }
+.content-section { margin-bottom: 52px; }
+
+/* PROSE */
+p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.85;
+  margin-bottom: 12px;
+  max-width: 800px;
+}
+
+p strong { color: var(--text); }
+
+p code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--stencil);
+  background: var(--stencil-dim2);
+  border-radius: 3px;
+  padding: 1px 6px;
+  border: 1px solid rgba(124,58,237,0.15);
+}
+
+/* CODE BLOCKS */
+.code-block {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-left: 3px solid var(--stencil);
+  border-radius: 5px;
+  padding: 16px 18px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 14px 0;
+  color: var(--text-muted);
+}
+
+.ck  { color: var(--stencil); }
+.ca  { color: var(--cyan); }
+.cf  { color: var(--green); }
+.cs  { color: var(--yellow); }
+.cm  { color: var(--text-dim); }
+.ct  { color: var(--orange); }
+
+/* PIPELINE DIAGRAM */
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 18px 0;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pipe-step {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 12px 16px;
+  text-align: center;
+  flex: 1;
+  min-width: 120px;
+}
+
+.pipe-step-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.pipe-step-desc {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  display: block;
+  line-height: 1.4;
+}
+
+.pipe-arrow {
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+/* FEATURE GRID */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 18px;
+  transition: border-color 0.15s;
+}
+
+.feature-card:hover { border-color: rgba(124,58,237,0.25); }
+
+.fc-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.fc-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.fc-desc code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--stencil);
+  background: var(--stencil-dim2);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+/* OUTPUT TARGETS */
+.targets-table {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.tt-row {
+  display: grid;
+  grid-template-columns: 160px 120px 1fr;
+  border-bottom: 1px solid var(--border2);
+}
+
+.tt-row:last-child { border-bottom: none; }
+.tt-row.tt-head { background: var(--surface2); }
+
+.tt-cell {
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+}
+
+.tt-cell:last-child { border-right: none; }
+.tt-head .tt-cell { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.target-name { color: var(--stencil); font-weight: 600; }
+
+.badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.b-stencil { color: var(--stencil); background: var(--stencil-dim2); border-color: rgba(124,58,237,0.25); }
+.b-cyan    { color: var(--cyan);    background: var(--cyan-dim2);    border-color: rgba(6,182,212,0.25); }
+.b-green   { color: var(--green);   background: var(--green-dim2);   border-color: rgba(34,197,94,0.25); }
+.b-orange  { color: var(--orange);  background: var(--orange-dim);   border-color: rgba(249,115,22,0.25); }
+
+/* TOOLS GRID */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tool-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.tool-card:hover { border-color: rgba(124,58,237,0.3); transform: translateY(-2px); }
+
+.tc-path { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+.tc-name { font-size: 13px; font-weight: 600; color: #fff; }
+.tc-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; flex: 1; }
+.tc-cta  { font-family: var(--mono); font-size: 11px; color: var(--stencil); }
+
+/* DENSE BLOCK */
+.dense-block {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 22px;
+  margin-top: 14px;
+}
+
+.dense-block p { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border2); }
+.dense-block p:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+
+/* FAQ */
+.faq-list {
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 52px;
+}
+
+.faq-item { border-bottom: 1px solid var(--border2); }
+.faq-item:last-child { border-bottom: none; }
+
+.faq-q {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: none;
+  padding: 13px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  font-family: var(--sans);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.15s;
+}
+
+.faq-q:hover { background: var(--stencil-dim2); }
+.faq-arrow { font-family: var(--mono); font-size: 11px; color: var(--text-dim); transition: transform 0.2s; flex-shrink: 0; }
+.faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+.faq-a {
+  display: none;
+  padding: 0 18px 13px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.75;
+  border-top: 1px solid var(--border2);
+  background: var(--bg);
+}
+
+.faq-item.open .faq-a { display: block; }
+.faq-a code { font-family: var(--mono); font-size: 11px; color: var(--stencil); background: var(--stencil-dim2); border-radius: 3px; padding: 1px 5px; }
+
+/* TAG CLOUD */
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 52px; }
+
+.tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 100px;
+  padding: 4px 12px;
+  cursor: default;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tag:hover { color: var(--stencil); border-color: rgba(124,58,237,0.3); }
+
+hr.divider { border: none; border-top: 1px solid var(--border2); margin: 52px 0; }
+
+footer { border-top: 1px solid var(--border2); padding: 22px 0; position: relative; z-index: 1; }
+
+.footer-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+footer p { font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin: 0; }
+
+@media (max-width: 680px) {
+  .pipeline     { flex-direction: column; }
+  .pipe-arrow   { transform: rotate(90deg); }
+  .feature-grid { grid-template-columns: 1fr; }
+  .tools-grid   { grid-template-columns: 1fr; }
+  .tt-row       { grid-template-columns: 120px 90px 1fr; font-size: 10px; }
 }
 </style>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Stencil Compiler – Web Components Compiler Reference","description":"Complete reference for the Stencil compiler. How Stencil transforms TypeScript decorators into standard Web Components, output targets (lazy, dist, custom-elements), compiler configuration, and build optimization.","keywords":"stencil compiler, stenciljs compiler, stencil web components, stencil output targets, stencil config"}
+</script>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is the Stencil compiler?","acceptedAnswer":{"@type":"Answer","text":"The Stencil compiler is a build-time tool that transforms TypeScript classes decorated with @Component, @Prop, @State, @Event, and other Stencil decorators into standard Web Components (Custom Elements v1 spec). It produces lazy-loaded bundles, performs tree-shaking, generates TypeScript type declarations, and outputs components in multiple formats (ESM, CommonJS, lazy) for different consumption patterns."}},{"@type":"Question","name":"How does the Stencil compiler work?","acceptedAnswer":{"@type":"Answer","text":"The Stencil compiler pipeline: (1) TypeScript transpilation — decorators are stripped and replaced with Web Component lifecycle methods. (2) JSX/TSX transformation — renders return JSX which is compiled to h() hyperscript calls. (3) Dependency analysis — the compiler builds a graph of component dependencies for code splitting. (4) Bundle generation — Rollup bundles each component independently for lazy loading. (5) Output target generation — produces different formats based on outputTargets config: lazy bundle, dist package, custom-elements standalone."}},{"@type":"Question","name":"What is the difference between Stencil output targets?","acceptedAnswer":{"@type":"Answer","text":"dist-lazy (lazy loading): generates an entry script that registers and lazy-loads components on demand. Best for standalone use via CDN or direct script tag. dist: creates a package with components pre-bundled for npm distribution. custom-elements: outputs each component as a standalone ES module, no lazy loading, ideal for integration into framework projects (React, Vue, Angular wrappers). www: builds a local dev server output for testing during development."}}]}
+</script>
+
 </head>
 
 <body>
-
 <header>
-    <h1>Stencil Tools</h1>
-    <p>Analyze builds, optimize bundles and debug web components</p>
+  <div class="header-inner">
+    <span class="logo-pill">&#9670;</span>
+    <span class="logo-text"><strong>stencil</strong>-compiler &middot; tools</span>
+  </div>
 </header>
 
-<div class="container">
+<div class="wrapper">
 
-<section>
-<h2>Stencil & Web Components Optimization Toolkit</h2>
+  <!-- HERO -->
+
+  <section class="hero">
+    <p class="hero-eyebrow">// Web Components Compiler</p>
+    <h1><em>Stencil Compiler</em> — How It Works,<br>Configuration &amp; Output Targets</h1>
+    <p class="hero-sub">
+      The <strong>Stencil compiler</strong> transforms TypeScript decorators into standard Web Components. Complete reference covering the build pipeline, output targets, compiler configuration, and performance optimization.
+    </p>
+    <div class="stat-row">
+      <div class="stat-chip"><span class="sc-val">TypeScript</span><span class="sc-lbl">input language</span></div>
+      <div class="stat-chip"><span class="sc-val">Web Components</span><span class="sc-lbl">output format</span></div>
+      <div class="stat-chip"><span class="sc-val">Rollup</span><span class="sc-lbl">bundler</span></div>
+      <div class="stat-chip"><span class="sc-val">Lazy Load</span><span class="sc-lbl">default strategy</span></div>
+    </div>
+  </section>
+
+  <!-- WHAT IS STENCIL COMPILER -->
+
+  <section class="content-section">
+    <div class="sec-head">
+      <span class="sec-label">What is the Stencil compiler</span>
+      <span class="sec-rule"></span>
+    </div>
+
+
 <p>
-These Stencil tools are designed for developers building modern web components.
-Analyze build processes, optimize bundles, debug lifecycle events, and improve reactivity and performance
-in component-based architectures.
+  The <strong>Stencil compiler</strong> is a build-time tool — not a runtime library. It takes TypeScript source files annotated with Stencil decorators (<code>@Component</code>, <code>@Prop</code>, <code>@State</code>, <code>@Event</code>, <code>@Watch</code>) and compiles them into <strong>standard Web Components</strong> (Custom Elements v1 spec) that run natively in all modern browsers without any framework dependency at runtime.
 </p>
-</section>
 
-<section class="grid">
-
-<div class="card">
-<h3>Build Analyzer</h3>
-<p>Analyze and optimize build processes.</p>
-<a href="stencil-tools/build">stencil-tools/build</a>
-</div>
-
-<div class="card">
-<h3>Bundle Analyzer</h3>
-<p>Inspect bundle size and dependencies.</p>
-<a href="stencil-tools/bundle">stencil-tools/bundle</a>
-</div>
-
-<div class="card">
-<h3>Compiler Analyzer</h3>
-<p>Debug and optimize the Stencil compiler.</p>
-<a href="stencil-tools/compiler">stencil-tools/compiler</a>
-</div>
-
-<div class="card">
-<h3>Lazy Loading Optimizer</h3>
-<p>Improve lazy loading strategies.</p>
-<a href="stencil-tools/lazy">stencil-tools/lazy</a>
-</div>
-
-<div class="card">
-<h3>Lifecycle Debugger</h3>
-<p>Inspect component lifecycle events.</p>
-<a href="stencil-tools/lifecycle">stencil-tools/lifecycle</a>
-</div>
-
-<div class="card">
-<h3>Reactivity Analyzer</h3>
-<p>Understand and debug reactive updates.</p>
-<a href="stencil-tools/reactivity">stencil-tools/reactivity</a>
-</div>
-
-<div class="card">
-<h3>Shadow DOM Inspector</h3>
-<p>Analyze Shadow DOM structure and behavior.</p>
-<a href="stencil-tools/shadow">stencil-tools/shadow</a>
-</div>
-
-</section>
-
-<section>
-<h2>Why Stencil Optimization Matters</h2>
 <p>
-Stencil enables high-performance web components, but optimizing builds and understanding lifecycle behavior
-is key to delivering efficient applications. These tools help you debug, optimize, and scale your components.
+  Unlike React or Vue which ship a runtime to the browser, Stencil components compile down to vanilla JavaScript custom elements. The compiler itself (~40MB npm package) never reaches the user's browser — only the compiled output does.
 </p>
-</section>
+
+<div class="pipeline">
+  <div class="pipe-step">
+    <span class="pipe-step-name" style="color:var(--stencil)">TypeScript</span>
+    <span class="pipe-step-desc">@Component decorator<br>JSX/TSX template</span>
+  </div>
+  <span class="pipe-arrow">&#8594;</span>
+  <div class="pipe-step">
+    <span class="pipe-step-name" style="color:var(--cyan)">Stencil Compiler</span>
+    <span class="pipe-step-desc">TS transform<br>dependency graph</span>
+  </div>
+  <span class="pipe-arrow">&#8594;</span>
+  <div class="pipe-step">
+    <span class="pipe-step-name" style="color:var(--orange)">Rollup Bundler</span>
+    <span class="pipe-step-desc">Code split<br>tree-shake</span>
+  </div>
+  <span class="pipe-arrow">&#8594;</span>
+  <div class="pipe-step">
+    <span class="pipe-step-name" style="color:var(--green)">Web Components</span>
+    <span class="pipe-step-desc">Custom Elements<br>Shadow DOM</span>
+  </div>
+</div>
+
+<div class="code-block"><span class="cm">// Input: TypeScript with Stencil decorators</span>
+
+
+<span class="ck">import</span> { Component, Prop, State, h } <span class="ck">from</span> <span class="cs">’@stencil/core’</span>;
+
+<span class="ca">@Component</span>({
+tag: <span class="cs">‘my-button’</span>,
+styleUrl: <span class="cs">‘my-button.css’</span>,
+shadow: <span class="cf">true</span>,
+})
+<span class="ck">export class</span> <span class="ct">MyButton</span> {
+<span class="ca">@Prop</span>() label: <span class="ct">string</span> = <span class="cs">‘Click me’</span>;
+<span class="ca">@State</span>() count: <span class="ct">number</span> = <span class="cs">0</span>;
+
+<span class="cf">render</span>() {
+<span class="ck">return</span> (
+<span class="cm">// JSX compiles to h() calls</span>
+<button onClick={() => this.count++}>
+{this.label} ({this.count})
+</button>
+);
+}
+}
+
+<span class="cm">// Output: standard Custom Element — no framework needed at runtime</span>
+<span class="cm">// <my-button label=“Click me”></my-button></span></div>
+
+  </section>
+
+  <!-- COMPILER PIPELINE -->
+
+  <section class="content-section">
+    <div class="sec-head">
+      <span class="sec-label">Stencil compiler pipeline</span>
+      <span class="sec-rule"></span>
+    </div>
+
+
+<div class="feature-grid">
+  <div class="feature-card">
+    <p class="fc-title">1. TypeScript Transformation</p>
+    <p class="fc-desc">Stencil uses the TypeScript compiler API to strip decorators and replace them with Web Component lifecycle methods. <code>@Prop()</code> becomes observed attributes + getters/setters. <code>@State()</code> triggers re-render on change. <code>@Event()</code> becomes <code>CustomEvent</code> dispatching.</p>
+  </div>
+  <div class="feature-card">
+    <p class="fc-title">2. JSX Compilation</p>
+    <p class="fc-desc">Stencil's JSX compiles to <code>h()</code> hyperscript function calls (similar to Mithril/Preact). The virtual DOM diffing runs at runtime inside the compiled component — only changed DOM nodes are updated. Shadow DOM encapsulates styles automatically.</p>
+  </div>
+  <div class="feature-card">
+    <p class="fc-title">3. Dependency Graph Analysis</p>
+    <p class="fc-desc">The compiler builds a dependency graph of all components. <code>my-card</code> that uses <code>my-button</code> forms a tree. This graph drives code splitting — each component and its dependencies bundle independently, enabling per-component lazy loading.</p>
+  </div>
+  <div class="feature-card">
+    <p class="fc-title">4. Rollup Bundling</p>
+    <p class="fc-desc">Stencil uses Rollup internally for bundling. Each component gets its own chunk. Common utilities are deduplicated into shared chunks. Tree-shaking removes unused code. The output is ES modules — no Webpack, no Babel required.</p>
+  </div>
+  <div class="feature-card">
+    <p class="fc-title">5. Output Target Generation</p>
+    <p class="fc-desc">A single Stencil project can produce multiple output formats simultaneously based on <code>outputTargets</code> in <code>stencil.config.ts</code>. Each target (lazy, dist, custom-elements) is optimized for a different consumption pattern.</p>
+  </div>
+  <div class="feature-card">
+    <p class="fc-title">6. Type Declaration Generation</p>
+    <p class="fc-desc">The compiler automatically generates <code>.d.ts</code> type declarations for all components, including prop types, event payloads, and method signatures. Framework wrappers (React, Vue, Angular) use these types for auto-complete and type checking.</p>
+  </div>
+</div>
+
+
+  </section>
+
+  <!-- OUTPUT TARGETS -->
+
+  <section class="content-section">
+    <div class="sec-head">
+      <span class="sec-label">Stencil output targets</span>
+      <span class="sec-rule"></span>
+    </div>
+
+
+<p>The <code>outputTargets</code> array in <code>stencil.config.ts</code> controls what the compiler produces. Multiple targets can be defined in one project.</p>
+
+<div class="targets-table">
+  <div class="tt-row tt-head">
+    <div class="tt-cell">Target</div>
+    <div class="tt-cell">Best for</div>
+    <div class="tt-cell">What it generates</div>
+  </div>
+  <div class="tt-row">
+    <div class="tt-cell target-name">dist-lazy</div>
+    <div class="tt-cell"><span class="badge b-cyan">CDN / Script</span></div>
+    <div class="tt-cell">Loader script + per-component lazy chunks. Components load on first use. Ideal for public CDN distribution or direct script tag inclusion.</div>
+  </div>
+  <div class="tt-row">
+    <div class="tt-cell target-name">dist</div>
+    <div class="tt-cell"><span class="badge b-stencil">npm package</span></div>
+    <div class="tt-cell">CommonJS + ESM bundles for npm. Includes type declarations. Use when publishing a component library to npm for framework agnostic use.</div>
+  </div>
+  <div class="tt-row">
+    <div class="tt-cell target-name">custom-elements</div>
+    <div class="tt-cell"><span class="badge b-green">Framework wrappers</span></div>
+    <div class="tt-cell">Each component as a standalone ES module, no lazy loading loader. Direct import: <code>import { MyButton } from 'pkg/components'</code>. Best for React/Vue/Angular wrappers.</div>
+  </div>
+  <div class="tt-row">
+    <div class="tt-cell target-name">www</div>
+    <div class="tt-cell"><span class="badge b-orange">Development</span></div>
+    <div class="tt-cell">Dev server output with hot-reload. Not for production distribution. Builds to <code>www/</code> directory with an index.html for testing components in browser.</div>
+  </div>
+</div>
+
+<div class="code-block"><span class="cm">// stencil.config.ts — multiple output targets example</span>
+
+
+<span class="ck">import</span> { Config } <span class="ck">from</span> <span class="cs">’@stencil/core’</span>;
+
+<span class="ck">export const</span> config: <span class="ct">Config</span> = {
+namespace: <span class="cs">‘my-design-system’</span>,
+outputTargets: [
+{
+type: <span class="cs">‘dist-lazy’</span>,       <span class="cm">// lazy-loaded for CDN</span>
+esmLoaderPath: <span class="cs">’../loader’</span>,
+},
+{
+type: <span class="cs">‘dist’</span>,              <span class="cm">// npm package</span>
+importHelpers: <span class="cf">false</span>,
+},
+{
+type: <span class="cs">‘custom-elements’</span>,  <span class="cm">// for framework wrappers</span>
+generateTypeDeclarations: <span class="cf">true</span>,
+},
+{
+type: <span class="cs">‘www’</span>,               <span class="cm">// dev server</span>
+serviceWorker: <span class="cf">null</span>,
+},
+],
+devServer: { reloadStrategy: <span class="cs">‘pageReload’</span> },
+};</div>
+
+  </section>
+
+  <!-- DECORATOR REFERENCE -->
+
+  <section class="content-section">
+    <div class="sec-head">
+      <span class="sec-label">Stencil compiler decorators</span>
+      <span class="sec-rule"></span>
+    </div>
+    <div class="dense-block">
+      <p><strong>@Component({ tag, styleUrl, shadow })</strong><br>
+      Registers the class as a custom element. <code>tag</code> defines the HTML tag name (must contain a hyphen). <code>shadow: true</code> enables Shadow DOM encapsulation. <code>styleUrl</code> path is resolved relative to the component file and inlined during compilation. <code>scoped: true</code> uses scoped CSS instead of Shadow DOM for style isolation without a true shadow root.</p>
+      <p><strong>@Prop() — external properties</strong><br>
+      Declares an external property that maps to an HTML attribute. Props are one-way: parent sets them, child reads them. <code>@Prop({ mutable: true })</code> allows child mutation. <code>@Prop({ reflect: true })</code> syncs the property back to the attribute. The compiler generates <code>observedAttributes</code> and <code>attributeChangedCallback</code> for all reflected props automatically.</p>
+      <p><strong>@State() — internal state</strong><br>
+      Marks a class property as internal state. Any mutation triggers a re-render. Unlike <code>@Prop()</code>, State is not reflected to attributes and is not accessible from outside the component. Use <code>@State()</code> for toggles, loading states, computed values, and internal data that shouldn't be part of the component's public API.</p>
+      <p><strong>@Event() and @Listen()</strong><br>
+      <code>@Event()</code> creates a <code>CustomEvent</code> dispatcher. <code>@Event() myClick: EventEmitter&lt;string&gt;;</code> lets you call <code>this.myClick.emit('value')</code> which fires a bubbling <code>CustomEvent</code>. <code>@Listen('click')</code> attaches event listeners that are automatically removed when the component disconnects. <code>@Listen('resize', { target: 'window' })</code> listens on the window object.</p>
+    </div>
+  </section>
+
+  <!-- TOOLS -->
+
+  <section class="content-section">
+    <div class="sec-head">
+      <span class="sec-label">Stencil analysis tools</span>
+      <span class="sec-rule"></span>
+    </div>
+    <div class="tools-grid">
+      <a class="tool-card" href="stencil-tools/compiler">
+        <span class="tc-path">stencil-tools/compiler</span>
+        <span class="tc-name">Compiler Analyzer</span>
+        <span class="tc-desc">Debug and optimize the Stencil compiler pipeline.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+      <a class="tool-card" href="stencil-tools/build">
+        <span class="tc-path">stencil-tools/build</span>
+        <span class="tc-name">Build Analyzer</span>
+        <span class="tc-desc">Analyze Stencil build processes and output.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+      <a class="tool-card" href="stencil-tools/bundle">
+        <span class="tc-path">stencil-tools/bundle</span>
+        <span class="tc-name">Bundle Analyzer</span>
+        <span class="tc-desc">Inspect bundle size and component dependencies.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+      <a class="tool-card" href="stencil-tools/lifecycle">
+        <span class="tc-path">stencil-tools/lifecycle</span>
+        <span class="tc-name">Lifecycle Debugger</span>
+        <span class="tc-desc">Inspect component lifecycle events and timing.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+      <a class="tool-card" href="stencil-tools/shadow">
+        <span class="tc-path">stencil-tools/shadow</span>
+        <span class="tc-name">Shadow DOM Inspector</span>
+        <span class="tc-desc">Analyze Shadow DOM structure and encapsulation.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+      <a class="tool-card" href="stencil-tools/reactivity">
+        <span class="tc-path">stencil-tools/reactivity</span>
+        <span class="tc-name">Reactivity Analyzer</span>
+        <span class="tc-desc">Debug reactive updates and render cycles.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+
+  <div class="sec-head">
+    <span class="sec-label">Frequently Asked Questions</span>
+    <span class="sec-rule"></span>
+  </div>
+  <div class="faq-list">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is the Stencil compiler?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">The Stencil compiler is a build-time tool that transforms TypeScript decorated with Stencil decorators (<code>@Component</code>, <code>@Prop</code>, <code>@State</code>, <code>@Event</code>) into standard Web Components (Custom Elements v1). It uses the TypeScript compiler API for transformation and Rollup for bundling. The compiler produces lazy-loaded chunks, type declarations, and multiple output formats. Nothing from the compiler ships to the browser — only the compiled Web Components do.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How does the Stencil compiler differ from Webpack/Babel?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">Stencil is a higher-level, opinionated compiler specifically for Web Components. It uses Rollup (not Webpack) internally and handles TypeScript transformation itself without Babel. Stencil automatically handles code splitting per component, generates multiple output targets simultaneously, produces type declarations, and manages the Web Component registration boilerplate. You don't configure Rollup or TypeScript directly — Stencil's <code>stencil.config.ts</code> provides a higher-level API.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is dist-lazy vs custom-elements in Stencil output targets?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a"><code>dist-lazy</code> generates a loader script that lazy-loads component chunks on first use — ideal for CDN distribution or adding components via a script tag to any webpage. <code>custom-elements</code> outputs each component as a standalone ES module with no lazy loading — ideal when building framework wrappers (React, Vue, Angular) that import specific components directly. Most component libraries use both: <code>dist-lazy</code> for CDN users and <code>custom-elements</code> for framework integration.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Does Stencil require a build tool like Vite or Webpack?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">No. Stencil is a self-contained compiler — it uses Rollup internally and you run it with <code>stencil build</code> or <code>stencil build --watch</code>. No separate Webpack, Vite, or Parcel configuration is needed. The Stencil dev server (<code>stencil build --dev --watch --serve</code>) handles HMR during development. However, if you embed Stencil-compiled components into an existing Vite or Webpack application, you just import the compiled output like any ES module.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How does Stencil handle Shadow DOM and CSS encapsulation?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">When <code>shadow: true</code> in <code>@Component()</code>, the Stencil compiler wraps the component's DOM in a Shadow Root, fully encapsulating its CSS from the page. Component styles are inlined into the Shadow DOM at runtime. When <code>scoped: true</code> is used instead, Stencil adds unique class-based attribute selectors to all styles — providing style isolation without a true shadow root, which improves compatibility with server-side rendering.</div>
+    </div>
+  </div>
+
+  <!-- TAGS -->
+
+  <div class="tag-cloud">
+    <span class="tag">stencil compiler</span>
+    <span class="tag">stenciljs compiler</span>
+    <span class="tag">stencil web components compiler</span>
+    <span class="tag">stencil output targets</span>
+    <span class="tag">stencil typescript decorators</span>
+    <span class="tag">stencil config</span>
+    <span class="tag">stencil lazy loading</span>
+    <span class="tag">stencil dist-lazy</span>
+    <span class="tag">stencil custom-elements</span>
+    <span class="tag">stencil build process</span>
+  </div>
 
 </div>
 
 <footer>
-<p>© 2026 Stencil Tools – Build faster, optimize components, scale efficiently</p>
+  <div class="footer-inner">
+    <p>stencil-compiler reference &middot; web components &middot; build tools</p>
+    <p>output targets &middot; decorators &middot; lazy loading &middot; github pages</p>
+  </div>
 </footer>
+
+<script>
+function toggleFaq(btn) {
+  btn.parentElement.classList.toggle('open');
+}
+</script>
 
 </body>
 </html>
